@@ -46,7 +46,7 @@ const COLORS = {
 const navLinks = [
   { 
     label: "Shop", 
-    href: "#shop",
+    href: "/shop",
     megaMenu: [
       {
         title: "Collections",
@@ -96,17 +96,26 @@ const navLinks = [
   { label: "Zodiac", href: "#zodiac", isZodiac: true },
   { 
     label: "Brand", 
-    href: "#brand",
+    href: "/about",
     dropdown: [
-      { name: "Our Story", desc: "Legacy of authenticity" },
-      { name: "Blog", desc: "Insights and wisdom" },
-      { name: "Reviews", desc: "Memoirs of patrons" }
+      { name: "Our Story", desc: "Legacy of authenticity", href: "/about" },
+      { name: "Blog", desc: "Insights and wisdom", href: "/blog" },
+      { name: "Reviews", desc: "Memoirs of patrons", href: "/about" }
     ]
   },
-  { label: "Contact", href: "#contact" },
+  {
+    label: "Contact",
+    href: "/contact",
+    dropdown: [
+      { name: "Contact Form", desc: "Send your gemstone enquiry", href: "/contact" },
+      { name: "Email Us", desc: "info@gemsratna.com", href: "/contact" },
+      { name: "Call Us", desc: "+91 98101 59604", href: "/contact" },
+      { name: "FAQ", desc: "Quick answers and guidance", href: "/faq" }
+    ]
+  },
 ];
 
-const heroSlides = [
+const defaultHeroSlides = [
   {
     image: "/assets/images/diamond_hero.png",
     smallText: "Unlock the Power of Gemstones",
@@ -132,6 +141,24 @@ const heroSlides = [
     subtext: "Experience the Swift Power of Blue Sapphire",
   },
 ];
+
+const buildHeroSlides = (hero?: any) => {
+  const images = Array.isArray(hero?.images) && hero.images.length > 0 ? hero.images.filter(Boolean) : [];
+
+  if (images.length > 0) {
+    return images.map((image: string, index: number) => ({
+      image,
+      smallText: hero?.smallText || "Unlock the Power of Gemstones",
+      heading: hero?.title || defaultHeroSlides[0].heading,
+      subtext: hero?.subtitle || defaultHeroSlides[0].subtext,
+      buttonText: hero?.buttonText || "Discover Aura",
+      buttonLink: hero?.buttonLink || "/aura",
+      imageAlt: hero?.imageAlt || hero?.title || `Hero image ${index + 1}`,
+    }));
+  }
+
+  return defaultHeroSlides;
+};
 
 const categories = [
   { name: "Moti (Pearl)", benefit: "Peace & Calm", image: "/assets/images/pearl_moti.png" },
@@ -341,7 +368,7 @@ const Navbar = () => {
                                                         <ul className="flex flex-col gap-6">
                                                             {link.dropdown.map((item: any) => (
                                                                 <li key={item.name}>
-                                                                    <Link href="#" className="flex flex-col">
+                                                                    <Link href={item.href ?? "#"} className="flex flex-col">
                                                                         <span className="text-[#111827] text-lg font-heading hover:text-gold transition-colors">{item.name}</span>
                                                                         <span className="text-black/40 text-xs mt-1">{item.desc}</span>
                                                                     </Link>
@@ -381,33 +408,40 @@ const Navbar = () => {
     );
 };
 
-const HeroSlider = () => {
-    const [current, setCurrent] = useState(0);
+const HeroSlider = ({ hero }: { hero?: any }) => {
+  const [current, setCurrent] = useState(0);
+  const heroSlides = buildHeroSlides(hero);
 
-    useEffect(() => {
-        const timer = setInterval(() => {
-            setCurrent((prev) => (prev + 1) % heroSlides.length);
-        }, 8000);
-        return () => clearInterval(timer);
-    }, []);
+  useEffect(() => {
+    setCurrent(0);
+  }, [heroSlides.length, hero?.title, hero?.subtitle, hero?.buttonLink, hero?.buttonText]);
+
+  useEffect(() => {
+    if (heroSlides.length <= 1) return;
+
+    const timer = setInterval(() => {
+        setCurrent((prev) => (prev + 1) % heroSlides.length);
+    }, 4000);
+    return () => clearInterval(timer);
+    }, [heroSlides.length]);
+
+  const activeSlide = heroSlides[current] || heroSlides[0];
 
     return (
         <section className="relative h-screen w-full overflow-hidden bg-[#020617] selection:bg-gold/30">
             <AnimatePresence mode="wait">
                 <motion.div
-                    key={current}
+                    key={`${activeSlide.image}-${current}`}
                     initial={{ opacity: 0, scale: 1.1 }}
                     animate={{ opacity: 1, scale: 1 }}
                     exit={{ opacity: 0, scale: 1.05 }}
                     transition={{ duration: 1.5, ease: "easeOut" }}
                     className="absolute inset-0"
                 >
-                    <Image 
-                        src={heroSlides[current].image} 
-                        alt={heroSlides[current].heading} 
-                        fill 
-                        priority
-                        className="object-cover opacity-80"
+                    <img
+                        src={activeSlide.image}
+                        alt={activeSlide.imageAlt || activeSlide.heading}
+                        className="h-full w-full object-cover opacity-80"
                     />
                     <div className="absolute inset-0 bg-gradient-to-r from-black/95 via-black/40 to-transparent" />
                     <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,_transparent_40%,_black_120%)]" />
@@ -434,21 +468,21 @@ const HeroSlider = () => {
                         <motion.div initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.8 }} className="flex items-center gap-6 mb-10 overflow-hidden">
                             <div className="w-12 h-px bg-gold/50 flex-shrink-0" />
                             <p className="text-gold uppercase tracking-[0.8em] text-[11px] font-black truncate">
-                                {heroSlides[current].smallText}
+                                {activeSlide.smallText}
                             </p>
                         </motion.div>
                         <h1 className="text-[clamp(2.5rem,8vw,8rem)] font-heading font-medium text-white mb-10 leading-[0.95] tracking-tighter">
-                            {heroSlides[current].heading}
+                            {activeSlide.heading}
                         </h1>
                         <p className="text-lg md:text-2xl text-white/50 font-light italic mb-16 max-w-2xl leading-relaxed">
-                            {heroSlides[current].subtext}
+                            {activeSlide.subtext}
                         </p>
                         
                         <div className="flex flex-wrap gap-8 items-center">
-                            <button className="group relative bg-gold text-black px-12 py-6 font-black uppercase tracking-[0.4em] text-[10px] overflow-hidden transition-all hover:pr-20">
-                                <span className="relative z-10">Discover Aura</span>
+                            <Link href={activeSlide.buttonLink || "/aura"} className="group relative bg-gold text-black px-12 py-6 font-black uppercase tracking-[0.4em] text-[10px] overflow-hidden transition-all hover:pr-20">
+                                <span className="relative z-10">{activeSlide.buttonText || "Discover Aura"}</span>
                                 <ArrowRight className="absolute right-8 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-all font-bold" size={20} />
-                            </button>
+                            </Link>
                             <button className="group flex items-center gap-6 text-white text-[10px] font-black uppercase tracking-[0.5em] px-8 py-6 hover:text-gold transition-all">
                                 Astral Reading <div className="w-12 h-px bg-white/20 group-hover:bg-gold group-hover:w-20 transition-all duration-500" />
                             </button>
@@ -459,7 +493,7 @@ const HeroSlider = () => {
 
             <div className="absolute bottom-16 right-16 z-30 flex items-center gap-12">
                 <div className="flex gap-4">
-                    {heroSlides.map((_, i) => (
+                    {heroSlides.map((_: { image: string }, i: number) => (
                         <button 
                             key={i} 
                             onClick={() => setCurrent(i)}
@@ -482,7 +516,7 @@ const Particles = () => {
   
     return (
       <div className="absolute inset-0 pointer-events-none overflow-hidden z-10">
-        {Array.from({ length: 25 }).map((_, i) => (
+        {Array.from({ length: 25 }).map((_: unknown, i: number) => (
           <motion.div
             key={i}
             className="absolute w-1 h-1 bg-[#d4af37] rounded-full opacity-30 shadow-[0_0_12px_#D4AF37]"
@@ -878,9 +912,12 @@ const Footer = () => (
     </footer>
 );
 
-export default function GemHomePage() {
+export default function GemHomePage({ hero }: { hero?: any } = {}) {
   const [mounted, setMounted] = useState(false);
-  useEffect(() => { setMounted(true); }, []);
+  useEffect(() => {
+    console.log("Frontend Data:", { hero });
+    setMounted(true);
+  }, [hero]);
 
   if (!mounted) return (
     <div className="h-screen bg-[#020617] flex items-center justify-center">
@@ -891,7 +928,7 @@ export default function GemHomePage() {
   return (
     <main className="text-white min-h-screen selection:bg-gold/30 font-sans bg-[#020617]">
       <Navbar />
-      <HeroSlider />
+      <HeroSlider hero={hero} />
       <TrustBar />
       <CategoryGrid />
       <WhyChooseUs />

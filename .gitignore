@@ -143,3 +143,5 @@ build-log.txt
 # Temporary files
 tmp/
 temp/
+
+tsconfig.tsbuildinfo
